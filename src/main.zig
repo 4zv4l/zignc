@@ -176,7 +176,6 @@ pub fn main() void {
     defer conn_setup.deinit();
     defer conn.close();
 
-    // print("{s} listening on {}\n", .{ ok_prefix, addr });
     // handle the connection
     handle(conn) catch {
         print("{s} issue when handling the connection\n", .{err_prefix});
