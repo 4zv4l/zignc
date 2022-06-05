@@ -46,11 +46,12 @@ const ConnSetup = struct {
 };
 
 /// show the program usage
-pub fn usage(arg: [*:0]u8) void {
+pub fn usage(arg: [*:0]const u8) void {
     print(
         \\ Usage : {s} [OPTION] [ip] [port]
         \\
         \\ OPTION:
+        \\   -h           show this help
         \\   -l           to start as server
         \\
     , .{arg});
@@ -124,9 +125,13 @@ pub fn getAddress(argv1: []const u8, argv2: []const u8) !net.Address {
 
 /// check if there are enough
 /// and return true if "-l" is set
-pub fn checkArgs(args: [][]const u8) error{WrongNumberOfArguments}!bool {
+pub fn checkArgs(args: [][:0]const u8) error{WrongNumberOfArguments}!bool {
     if (args.len < 3 or args.len > 4) {
         return error.WrongNumberOfArguments;
+    }
+    if (mem.eql(u8, args[1], "-h")) {
+        usage(args[0]);
+        process.exit(0);
     }
     return mem.eql(u8, args[1], "-l");
 }
