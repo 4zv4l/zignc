@@ -67,6 +67,7 @@ pub fn getAll(reader: anytype, writer: anytype, buff: []u8) void {
             getAll(reader, writer, buff);
             return;
         },
+        error.EndOfStream => process.exit(0), // if conn closed
         else => process.exit(6),
     };
     writer.writeAll(buff[0 .. data.len + 1]) catch {
@@ -124,7 +125,7 @@ pub fn getAddress(argv1: []const u8, argv2: []const u8) !net.Address {
 /// check if there are enough
 /// and return true if "-l" is set
 pub fn checkArgs(args: [][]const u8) error{WrongNumberOfArguments}!bool {
-    if (args.len < 3) {
+    if (args.len < 3 or args.len > 4) {
         return error.WrongNumberOfArguments;
     }
     return mem.eql(u8, args[1], "-l");
