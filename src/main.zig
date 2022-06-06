@@ -57,31 +57,37 @@ pub fn usage(arg: [*:0]const u8) void {
     , .{arg});
 }
 
-/// recursive function reading/writing data until '\n'
+/// reading/writing data until '\n'
 pub fn getAll(reader: anytype, writer: anytype, buff: []u8) void {
-    const data = reader.readUntilDelimiter(buff, '\n') catch |e| switch (e) {
-        error.StreamTooLong => {
-            writer.writeAll(buff) catch {
-                print("{s} error when sending data\n", .{err_prefix});
-                return;
-            };
-            getAll(reader, writer, buff);
+    var isAgain: bool = true;
+    while (isAgain) {
+        // read from reader
+        const data = reader.readUntilDelimiter(buff, '\n') catch |e| switch (e) {
+            // if error : write and read again until reaching '\n'
+            error.StreamTooLong => {
+                writer.writeAll(buff) catch {
+                    print("{s} error when sending data\n", .{err_prefix});
+                    return;
+                };
+                continue;
+            },
+            error.EndOfStream => process.exit(0), // if conn closed
+            else => process.exit(6),
+        };
+        // if no error then write and break using isAgain
+        isAgain = false;
+        writer.writeAll(buff[0 .. data.len + 1]) catch {
+            print("{s} error when sending data\n", .{err_prefix});
             return;
-        },
-        error.EndOfStream => process.exit(0), // if conn closed
-        else => process.exit(6),
-    };
-    writer.writeAll(buff[0 .. data.len + 1]) catch {
-        print("{s} error when sending data\n", .{err_prefix});
-        return;
-    };
+        };
+    }
 }
 
 /// read from conn
 pub fn readUntilEof(conn: net.Stream) !void {
     const stdout = io.getStdOut();
     const reader = conn.reader();
-    var buff: [1024]u8 = undefined;
+    var buff: [10]u8 = undefined;
     while (true) {
         getAll(reader, stdout.writer(), &buff);
     }
@@ -90,7 +96,7 @@ pub fn readUntilEof(conn: net.Stream) !void {
 /// reading from stdin and sending to conn
 pub fn writeUntilSTOP(conn: net.Stream) !void {
     const stdin = io.getStdIn();
-    var buff: [1024]u8 = undefined;
+    var buff: [10]u8 = undefined;
     while (true) {
         getAll(stdin.reader(), conn.writer(), &buff);
     }
