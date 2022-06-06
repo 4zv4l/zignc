@@ -87,7 +87,7 @@ pub fn getAll(reader: anytype, writer: anytype, buff: []u8) void {
 pub fn readUntilEof(conn: net.Stream) !void {
     const stdout = io.getStdOut();
     const reader = conn.reader();
-    var buff: [10]u8 = undefined;
+    var buff: [1024]u8 = undefined;
     while (true) {
         getAll(reader, stdout.writer(), &buff);
     }
@@ -96,7 +96,7 @@ pub fn readUntilEof(conn: net.Stream) !void {
 /// reading from stdin and sending to conn
 pub fn writeUntilSTOP(conn: net.Stream) !void {
     const stdin = io.getStdIn();
-    var buff: [10]u8 = undefined;
+    var buff: [1024]u8 = undefined;
     while (true) {
         getAll(stdin.reader(), conn.writer(), &buff);
     }
